@@ -29,7 +29,7 @@ const discovery = {
 const StyledStripes = styled(Stripes)
 
 export default function App() {
-  const [request, response, signInWithGithub] = useAuthRequest(
+  const [, response, signInWithGithub] = useAuthRequest(
     {
       clientId: '1f94748a7180a3518720',
       scopes: ['identity'],
