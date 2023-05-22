@@ -1,5 +1,6 @@
 import { StatusBar } from 'expo-status-bar'
 import { ImageBackground, View, Text, TouchableOpacity } from 'react-native'
+import * as SecureStore from 'expo-secure-store'
 
 import {
   useFonts,
@@ -15,9 +16,57 @@ import NlwLogo from './src/assets/nlw-spacetime-logo.svg'
 
 import { styled } from 'nativewind'
 
+import { makeRedirectUri, useAuthRequest } from 'expo-auth-session'
+import { useEffect } from 'react'
+import { api } from './src/lib/api'
+const discovery = {
+  authorizationEndpoint: 'https://github.com/login/oauth/authorize',
+  tokenEndpoint: 'https://github.com/login/oauth/access_token',
+  revocationEndpoint:
+    'https://github.com/settings/connections/applications/1f94748a7180a3518720',
+}
+
 const StyledStripes = styled(Stripes)
 
 export default function App() {
+  const [request, response, signInWithGithub] = useAuthRequest(
+    {
+      clientId: '1f94748a7180a3518720',
+      scopes: ['identity'],
+      redirectUri: makeRedirectUri({
+        scheme: 'nlw-spacetime-mobile',
+      }),
+    },
+    discovery,
+  )
+
+  useEffect(() => {
+    /* Debug the url in case the redirect stops working.
+    console.log(
+      makeRedirectUri({
+        scheme: 'nlw-spacetime-mobile',
+      }),
+    )
+    */
+
+    if (response?.type === 'success') {
+      const { code } = response.params
+
+      api
+        .post('/register', {
+          code,
+        })
+        .then((response) => {
+          const { token } = response.data
+
+          SecureStore.setItemAsync('token', token)
+        })
+        .catch((err) => {
+          console.log(err)
+        })
+    }
+  }, [response])
+
   const [hasLoadedFonts] = useFonts({
     Roboto_400Regular,
     Roboto_700Bold,
@@ -52,6 +101,7 @@ export default function App() {
         <TouchableOpacity
           activeOpacity={0.7}
           className="rounded-full bg-green-500 px-5 py-3"
+          onPress={() => signInWithGithub()}
         >
           <Text className="font-alt text-sm uppercase text-black">
             Cadastrar Lembrança
