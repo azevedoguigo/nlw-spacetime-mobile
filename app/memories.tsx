@@ -1,4 +1,11 @@
-import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native'
+import {
+  Image,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+  RefreshControl,
+} from 'react-native'
 import Icon from '@expo/vector-icons/Feather'
 import * as SecureStore from 'expo-secure-store'
 
@@ -22,7 +29,9 @@ interface Memory {
 export default function NewMemory() {
   const { bottom, top } = useSafeAreaInsets()
   const router = useRouter()
+
   const [memories, setMemories] = useState<Memory[]>([])
+  const [refreshing, setRefreshing] = useState<boolean>(false)
 
   async function signOut() {
     await SecureStore.deleteItemAsync('token')
@@ -40,16 +49,25 @@ export default function NewMemory() {
     })
 
     setMemories(response.data)
+    setRefreshing(false)
   }
 
   useEffect(() => {
     loadMemories()
   }, [])
 
+  const onRefresh = () => {
+    setRefreshing(true)
+    loadMemories()
+  }
+
   return (
     <ScrollView
       className="flex-1"
       contentContainerStyle={{ paddingBottom: bottom, paddingTop: top }}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
     >
       <View className="mt-4 flex-row items-center justify-between px-8">
         <NLWLogo />
